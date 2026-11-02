@@ -7,6 +7,8 @@ El prototipo original sigue en `index.html` y su justificación en `patentes-y-r
 
 ## Cómo ejecutarla
 
+¿Usa VS Code? Vea [VSCODE.md](VSCODE.md).
+
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -r requirements-dev.txt

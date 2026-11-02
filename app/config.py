@@ -1,4 +1,9 @@
-"""Configuración central. Todo valor ajustable vive aquí y se puede cambiar por variable de entorno."""
+"""Configuración central. Todo valor ajustable vive aquí y se puede cambiar por variable de entorno.
+
+Las variables se pueden poner en un archivo `.env` en la raíz del proyecto (vea `.env.example`).
+Ninguna es obligatoria: todas tienen un valor por defecto. Una variable definida en el sistema
+tiene prioridad sobre la del archivo `.env`.
+"""
 
 import os
 from dataclasses import dataclass
@@ -8,9 +13,32 @@ from zoneinfo import ZoneInfo
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+def _load_env_file(path: Path) -> None:
+    """Lee líneas CLAVE=valor; ignora vacías y comentarios (#). Sin dependencias externas."""
+    if not path.is_file():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        value = value.strip().strip('"').strip("'")
+        if value:
+            os.environ.setdefault(key.strip(), value)
+
+
+_load_env_file(BASE_DIR / ".env")
+
+
+def _db_path() -> Path:
+    # Una ruta relativa se toma desde la carpeta del proyecto, no desde donde se ejecute el comando.
+    p = Path(os.getenv("MIRECETA_DB", BASE_DIR / "data" / "mireceta.db")).expanduser()
+    return p if p.is_absolute() else BASE_DIR / p
+
+
 @dataclass(frozen=True)
 class Settings:
-    db_path: Path = Path(os.getenv("MIRECETA_DB", BASE_DIR / "data" / "mireceta.db"))
+    db_path: Path = _db_path()
     timezone: ZoneInfo = ZoneInfo(os.getenv("MIRECETA_TZ", "America/Bogota"))
 
     # Sesión: larga, para no obligar a personas mayores a ingresar a cada rato.

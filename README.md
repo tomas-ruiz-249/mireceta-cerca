@@ -7,7 +7,7 @@ El prototipo original sigue en `index.html` y su justificación en `patentes-y-r
 
 ## Cómo ejecutarla
 
-¿Usa VS Code? Vea [VSCODE.md](VSCODE.md).
+Guía completa paso a paso (instalación desde cero, VS Code, variables de entorno y problemas comunes): [VSCODE.md](VSCODE.md). Configuración opcional: copie `.env.example` como `.env`.
 
 ```bash
 python3 -m venv .venv

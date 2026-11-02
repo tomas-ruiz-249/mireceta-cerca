@@ -1,0 +1,44 @@
+/* Colores, letras y tamaños. Cambie aquí para modificar el aspecto de toda la app. */
+:root {
+  --paper: #F3F7F5;
+  --surface: #FFFFFF;
+  --sunk: #E4ECE9;
+  --ink: #0F1A17;
+  --muted: #3F4D48;          /* contraste alto, pensado para baja visión */
+  --line: #B9C9C3;
+  --accent: #0B5F4E;
+  --accent-ink: #FFFFFF;
+  --accent-soft: #D3EBE3;
+  --ok: #15663A;   --ok-soft: #DAF0E2;
+  --warn: #7F4A00; --warn-soft: #FBE8C6;
+  --bad: #A01B12;  --bad-soft: #FADCD8;
+  --focus: #1F5FD1;
+  --shadow: 0 12px 32px -16px rgba(15, 40, 32, .35);
+
+  --font: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+
+  --text: 20px;              /* tamaño base; la persona puede agrandarlo en "Mi cuenta" */
+  --radius: 16px;
+  --tap: 60px;               /* alto mínimo de botones: fácil de tocar */
+  --page: 680px;             /* una sola columna, fácil de seguir */
+}
+:root[data-text="grande"] { --text: 23px; }
+:root[data-text="muy-grande"] { --text: 27px; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --paper: #0E1513; --surface: #17211E; --sunk: #101916; --ink: #EEF4F1; --muted: #B8C7C1; --line: #3A4B45;
+    --accent: #5FD0AE; --accent-ink: #04201A; --accent-soft: #163A30;
+    --ok: #74DCA0; --ok-soft: #12301F; --warn: #F5BD5C; --warn-soft: #3A2A0E; --bad: #F4948A; --bad-soft: #3D1A17;
+    --focus: #8DB4FF; --shadow: 0 12px 32px -16px rgba(0, 0, 0, .7);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --paper: #0E1513; --surface: #17211E; --sunk: #101916; --ink: #EEF4F1; --muted: #B8C7C1; --line: #3A4B45;
+  --accent: #5FD0AE; --accent-ink: #04201A; --accent-soft: #163A30;
+  --ok: #74DCA0; --ok-soft: #12301F; --warn: #F5BD5C; --warn-soft: #3A2A0E; --bad: #F4948A; --bad-soft: #3D1A17;
+  --focus: #8DB4FF; --shadow: 0 12px 32px -16px rgba(0, 0, 0, .7);
+}

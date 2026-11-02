@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MiReceta Cerca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --paper:#EEF3F1; --surface:#FFFFFF; --sunk:#E3EBE8; --ink:#14201D; --muted:#56655F; --line:#CFDAD6;
+  --accent:#0E6B58; --accent-ink:#FFFFFF; --accent-soft:#D5ECE5;
+  --ok:#1D7A46; --ok-soft:#DDF1E4; --warn:#9A5B00; --warn-soft:#FBEBCF; --bad:#B42318; --bad-soft:#FBE1DE;
+  --road:#FFFFFF; --park:#CFE6D8; --shadow:0 18px 50px -20px rgba(20,40,34,.35);
+  --display:"Bricolage Grotesque","Segoe UI",system-ui,sans-serif;
+  --body:"Figtree","Segoe UI",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#0F1614; --surface:#18221F; --sunk:#111A17; --ink:#E6EEEB; --muted:#9AADA6; --line:#2C3A36;
+    --accent:#4FC3A1; --accent-ink:#06231C; --accent-soft:#173A31;
+    --ok:#5FD08F; --ok-soft:#153323; --warn:#F2B34C; --warn-soft:#3A2A0E; --bad:#F2877D; --bad-soft:#3D1A17;
+    --road:#24312D; --park:#1A2E25; --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#0F1614; --surface:#18221F; --sunk:#111A17; --ink:#E6EEEB; --muted:#9AADA6; --line:#2C3A36;
+  --accent:#4FC3A1; --accent-ink:#06231C; --accent-soft:#173A31;
+  --ok:#5FD08F; --ok-soft:#153323; --warn:#F2B34C; --warn-soft:#3A2A0E; --bad:#F2877D; --bad-soft:#3D1A17;
+  --road:#24312D; --park:#1A2E25; --shadow:0 18px 50px -20px rgba(0,0,0,.7);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;min-height:100vh;display:flex;flex-direction:column}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+button{font:inherit;color:inherit;cursor:pointer}
+a{color:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+/* Top bar */
+.top{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.top-in{max-width:1240px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:24px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;border:0;background:none;padding:0}
+.brand .mark{width:34px;height:34px;border-radius:10px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-family:var(--display);font-weight:700}
+.brand b{font-family:var(--display);font-size:19px;font-weight:700}
+.nav{display:flex;gap:4px;flex:1;flex-wrap:wrap}
+.nav button{border:0;background:none;padding:8px 12px;border-radius:10px;color:var(--muted);font-weight:500}
+.nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.user{display:flex;align-items:center;gap:12px}
+.bell{position:relative;border:1px solid var(--line);background:var(--surface);width:38px;height:38px;border-radius:50%}
+.bell .n{position:absolute;top:-4px;right:-4px;background:var(--bad);color:#fff;font-size:11px;font-weight:700;border-radius:999px;min-width:18px;height:18px;display:grid;place-items:center;padding:0 4px}
+.avatar{width:38px;height:38px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-weight:700;font-size:14px}
+
+
+main{flex:1;width:100%;max-width:1240px;margin:0 auto;padding:28px 24px 64px;display:flex;flex-direction:column;gap:24px}
+.crumbs{font-size:13px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap}
+.crumbs button{border:0;background:none;padding:0;color:var(--accent);font-weight:500}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:600;background:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.block{width:100%}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:3px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-ok{background:var(--ok-soft);color:var(--ok)}
+.b-warn{background:var(--warn-soft);color:var(--warn)}
+.b-bad{background:var(--bad-soft);color:var(--bad)}
+.fresh{font-size:12px;color:var(--muted);display:inline-flex;align-items:center;gap:6px}
+.fresh i{width:6px;height:6px;border-radius:50%;background:var(--ok);display:inline-block}
+
+/* Home */
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:24px;align-items:stretch}
+.hero-main{display:flex;flex-direction:column;gap:18px;justify-content:center;padding:32px;background:var(--surface);border:1px solid var(--line);border-radius:20px}
+.hero-main h1{font-size:clamp(28px,3.4vw,40px);font-weight:700;line-height:1.1}
+.search{display:flex;align-items:center;gap:10px;background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:6px 6px 6px 16px}
+.search input{border:0;background:transparent;flex:1;font:inherit;font-size:16px;color:var(--ink);min-width:0;padding:8px 0}
+.search input:focus{outline:none}
+.search .btn{padding:10px 18px}
+.who{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 14px;font-size:13px}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.hero-side{display:flex;flex-direction:column;gap:12px}
+.alert-card{display:flex;flex-direction:column;gap:8px}
+.rxs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.rx{display:flex;flex-direction:column;gap:10px;text-align:left}
+.rx h3{font-size:17px}
+.rx .foot{margin-top:auto;display:flex;justify-content:space-between;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--line)}
+.linkish{color:var(--accent);font-weight:600;font-size:14px}
+.rx.dim{opacity:.72}
+.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}
+.section-head h2{font-size:22px}
+
+/* Results */
+.results{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:20px;align-items:start}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filters select{font:inherit;font-size:13px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:5px 12px}
+.list{display:flex;flex-direction:column;gap:12px}
+.ph{display:flex;flex-direction:column;gap:8px;text-align:left;width:100%;padding:16px}
+.ph.sel{border:2px solid var(--accent);padding:15px}
+.ph-top{display:flex;justify-content:space-between;gap:8px;align-items:start}
+.ph h3{font-size:16px}
+.meta{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--muted)}
+.best{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.map{position:sticky;top:90px;border-radius:18px;overflow:hidden;border:1px solid var(--line);background:var(--sunk);aspect-ratio:4/3;max-width:100%}
+.map svg{display:block;width:100%;height:100%}
+.map .pin{cursor:pointer}
+.map text{font-family:var(--body);font-size:12px;font-weight:600;fill:var(--ink)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* Detail */
+.detail{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,380px);gap:20px;align-items:start}
+.detail-main{display:flex;flex-direction:column;gap:20px}
+.stockrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.stat .v{font-family:var(--display);font-size:34px;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.stat .v.ok{color:var(--ok)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:10px 24px;font-size:14px;margin:0}
+.kv dt{color:var(--muted)}
+.kv dd{margin:0;font-weight:500}
+.reserve{position:sticky;top:90px;display:flex;flex-direction:column;gap:14px}
+.reserve h3{font-size:19px}
+.hist{width:100%;border-collapse:collapse;font-size:13px}
+.hist th{text-align:left;font-weight:600;color:var(--muted);border-bottom:1px solid var(--line);padding:6px 8px 6px 0}
+.hist td{border-bottom:1px solid var(--line);padding:8px 8px 8px 0;font-variant-numeric:tabular-nums}
+.hist tr:last-child td{border-bottom:0}
+.tbl{overflow-x:auto}
+
+/* Reservation */
+.resv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:20px;align-items:start}
+.tracker{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0}
+.tracker li{display:flex;flex-direction:column;gap:8px;position:relative;padding-right:12px}
+.tracker li::after{content:"";position:absolute;top:15px;left:32px;right:0;height:3px;background:var(--line);border-radius:2px}
+.tracker li:last-child::after{display:none}
+.tracker li.done::after{background:var(--accent)}
+.tracker .dot{width:32px;height:32px;border-radius:50%;border:2px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--muted);position:relative;z-index:1}
+.tracker li.done .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.tracker li.now .dot{border-color:var(--accent);color:var(--accent)}
+.tracker b{font-size:14px;display:block}
+.tracker span{font-size:12px;color:var(--muted)}
+.pickup{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.counter{font-family:var(--display);font-size:52px;font-weight:700;line-height:1;color:var(--accent)}
+.codebox{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.code{font-family:var(--mono);font-size:24px;letter-spacing:.2em;background:var(--sunk);border-radius:12px;padding:10px 16px}
+.qr{width:128px;height:128px;display:grid;grid-template-columns:repeat(11,1fr);padding:8px;background:#fff;border-radius:10px;border:1px solid var(--line)}
+.qr i{background:#111}.qr i.w{background:#fff}
+.events{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:13px}
+.events li{display:grid;grid-template-columns:52px 1fr;gap:10px}
+.events time{font-family:var(--mono);color:var(--muted)}
+
+/* Toast */
+.toast{position:fixed;right:24px;top:80px;width:min(380px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);display:grid;grid-template-columns:40px 1fr auto;gap:12px;align-items:start;transform:translateX(calc(100% + 40px));transition:transform .35s ease;z-index:40}
+.toast.show{transform:none}
+.toast .mk{width:40px;height:40px;border-radius:12px;background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;font-weight:700;font-family:var(--display)}
+.toast b{font-size:14px}.toast p{margin:2px 0 8px;font-size:13px;color:var(--muted)}
+.toast .x{border:0;background:none;color:var(--muted);font-size:18px;line-height:1}
+.toast .btn{padding:7px 12px;font-size:13px}
+
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+@media (max-width:980px){
+  .hero,.results,.detail,.resv{grid-template-columns:1fr}
+  .rxs{grid-template-columns:1fr 1fr}
+  .map,.reserve{position:static}
+}
+@media (max-width:640px){
+  .rxs,.stockrow{grid-template-columns:1fr}
+  .tracker{grid-template-columns:1fr 1fr;row-gap:18px}
+  .tracker li::after{display:none}
+  .top-in,main{padding-inline:16px}
+  .hero-main{padding:22px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <button class="brand" onclick="go('inicio')" aria-label="Ir al inicio"><span class="mark">Rx</span><b>MiReceta Cerca</b></button>
+    <nav class="nav" id="nav"></nav>
+    <div class="user">
+      <button class="bell" aria-label="Avisos" onclick="if(S.status>=2)go('reserva')">🔔<span class="n" id="bellN" hidden>1</span></button>
+      <div class="avatar" title="María Quispe">MQ</div>
+    </div>
+  </div>
+</header>
+
+<main id="main"></main>
+
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <div class="mk">Rx</div>
+  <div><b>Tu receta está lista para retirar</b><p>Losartán 50 mg · Farmacia del Parque · Mostrador 2</p><button class="btn" onclick="hideToast();go('reserva')">Ver instrucciones</button></div>
+  <button class="x" aria-label="Cerrar aviso" onclick="hideToast()">×</button>
+</div>
+
+
+<script>
+const S={screen:"inicio",who:"yo",sel:"parque",status:-1,arrived:false,timers:[]};
+
+const PH=[
+  {id:"parque",name:"Farmacia del Parque",addr:"Av. Los Próceres 1450",dist:"1,2 km",time:"4 min en auto",hours:"Abierta hasta 21:00",stock:12,fresh:"hace 4 min",state:"ok",best:true,x:410,y:120,counter:"Mostrador 2 · Retiro rápido"},
+  {id:"central",name:"Farmacia Central San Martín",addr:"Jr. San Martín 322",dist:"2,8 km",time:"9 min en auto",hours:"Abierta 24 horas",stock:3,fresh:"hace 11 min",state:"warn",x:150,y:300,counter:"Mostrador 1"},
+  {id:"olivos",name:"Botica Los Olivos",addr:"Calle Los Olivos 88",dist:"0,7 km",time:"3 min a pie",hours:"Abierta hasta 20:00",stock:0,fresh:"hace 2 min",state:"bad",restock:"jueves 1 de octubre",x:300,y:250},
+  {id:"norte",name:"Farmacia Norte Salud",addr:"Av. Universitaria 2010",dist:"3,4 km",time:"12 min en auto",hours:"Abierta hasta 22:00",stock:27,fresh:"hace 18 min",state:"ok",x:520,y:60},
+];
+const RX={
+  yo:[{n:"Losartán potásico 50 mg",p:"Caja × 30 tabletas",id:"RX-2026-004817",doc:"Dra. Paredes · Cardiología",active:true},
+      {n:"Atorvastatina 20 mg",p:"Caja × 30 tabletas",id:"RX-2026-003902",doc:"Dra. Paredes · Cardiología",note:"Próxima reposición en 12 días"},
+      {n:"Omeprazol 20 mg",p:"Caja × 14 cápsulas",id:"RX-2026-002551",doc:"Dr. Salas · Medicina general",note:"Receta vence el 30/10"}],
+  mama:[{n:"Metformina 850 mg",p:"Caja × 60 tabletas",id:"RX-2026-004120",doc:"Dr. Rojas · Endocrinología",active:true},
+        {n:"Levotiroxina 50 mcg",p:"Caja × 50 tabletas",id:"RX-2026-003377",doc:"Dr. Rojas · Endocrinología",note:"Próxima reposición en 5 días"},
+        {n:"Amlodipino 5 mg",p:"Caja × 30 tabletas",id:"RX-2026-001984",doc:"Dra. Paredes · Cardiología",note:"Retirada el 12/09"}]
+};
+const STEPS=[["Reserva recibida","Se apartó 1 caja para ti"],["En preparación","El farmacéutico valida tu receta"],["Lista para retirar","Mostrador 2 · Retiro rápido"],["Retirada","Entregada en mostrador"]];
+
+const $=id=>document.getElementById(id);
+function go(s){S.screen=s;render();window.scrollTo({top:0});}
+function selPh(){return PH.find(p=>p.id===S.sel);}
+function badge(p){
+  if(p.state==="ok")return `<span class="badge b-ok">${p.stock} disponibles</span>`;
+  if(p.state==="warn")return `<span class="badge b-warn">Quedan ${p.stock}</span>`;
+  return `<span class="badge b-bad">Sin stock</span>`;
+}
+const col=p=>p.state==="ok"?"var(--ok)":p.state==="warn"?"var(--warn)":"var(--bad)";
+function crumbs(items){return `<div class="crumbs">${items.map((c,i)=>i<items.length-1?`<button onclick="go('${c[1]}')">${c[0]}</button><span>/</span>`:`<span>${c[0]}</span>`).join("")}</div>`;}
+
+function mapSvg(){
+  return `<svg viewBox="0 0 640 480" role="img" aria-label="Mapa con farmacias cercanas">
+    <rect width="640" height="480" fill="var(--sunk)"/>
+    <rect x="200" y="330" width="170" height="110" rx="10" fill="var(--park)"/>
+    <text x="285" y="390" text-anchor="middle" style="fill:var(--muted);font-weight:500">Parque Central</text>
+    <path d="M0 200 L640 150" stroke="var(--road)" stroke-width="18" fill="none"/>
+    <path d="M230 0 L270 480" stroke="var(--road)" stroke-width="14" fill="none"/>
+    <path d="M0 80 L640 110" stroke="var(--road)" stroke-width="8" fill="none"/>
+    <path d="M470 0 L440 480" stroke="var(--road)" stroke-width="8" fill="none"/>
+    <path d="M0 400 L640 360" stroke="var(--road)" stroke-width="8" fill="none"/>
+    <g><circle cx="260" cy="330" r="22" fill="var(--accent)" opacity=".18"/><circle cx="260" cy="330" r="9" fill="var(--accent)" stroke="var(--surface)" stroke-width="3"/>
+      <text x="260" y="364" text-anchor="middle">Tú</text></g>
+    ${PH.map(p=>`<g class="pin" onclick="S.sel='${p.id}';render()">
+      <circle cx="${p.x}" cy="${p.y}" r="${S.sel===p.id?17:13}" fill="${col(p)}" stroke="var(--surface)" stroke-width="3"/>
+      <text x="${p.x}" y="${p.y-24}" text-anchor="middle">${p.name.replace("Farmacia ","")}</text></g>`).join("")}
+  </svg>`;
+}
+function qr(){
+  const pat="11111110101111100010100100010111010110101110101100101011101000001010000011111110101111111000000000000000110110101001011011010110110100111001010010110110101110100101011010";
+  let h="";for(let i=0;i<121;i++)h+=`<i class="${pat[i]==="1"?"":"w"}"></i>`;return `<div class="qr" aria-hidden="true">${h}</div>`;
+}
+
+function render(){
+  const m=$("main");
+  const list=RX[S.who], whoName=S.who==="yo"?"María":"Rosa (mamá)";
+  $("nav").innerHTML=[["inicio","Mis recetas"],["disponibilidad","Buscar medicamento"],["reserva","Mis reservas"]].map(([k,l])=>`<button class="${S.screen===k||(k==="disponibilidad"&&S.screen==="farmacia")?"on":""}" onclick="go('${k}')">${l}</button>`).join("");
+  $("bellN").hidden=S.status<2||S.status>=3;
+
+  if(S.screen==="inicio"){
+    m.innerHTML=`
+      <section class="hero">
+        <div class="hero-main">
+          <div class="label">Hola, María</div>
+          <h1>¿Qué medicamento necesitas hoy?</h1>
+          <label class="search" for="q"><span aria-hidden="true">⌕</span>
+            <input id="q" placeholder="Nombre del medicamento, código o N° de receta" value="Losartán 50 mg">
+            <button class="btn" onclick="go('disponibilidad')">Buscar</button></label>
+          <div class="who"><span class="small muted">Consultar para:</span>
+            <button class="chip ${S.who==="yo"?"on":""}" onclick="S.who='yo';render()">Yo</button>
+            <button class="chip ${S.who==="mama"?"on":""}" onclick="S.who='mama';render()">Rosa (mamá)</button>
+            <button class="chip">+ Agregar familiar</button></div>
+        </div>
+        <div class="hero-side">
+          ${S.status>=0&&S.status<3?`
+          <div class="card alert-card"><div class="label">Reserva en curso</div>
+            <h3 style="font-size:18px">Losartán 50 mg · Farmacia del Parque</h3>
+            <div>${S.status>=2?`<span class="badge b-ok">Lista para retirar</span>`:`<span class="badge b-warn">${STEPS[S.status][0]}</span>`}</div>
+            <button class="btn ghost" onclick="go('reserva')">Ver mi reserva</button></div>`:`
+          <div class="card alert-card"><div class="label">Sin reservas activas</div>
+            <p class="small muted" style="margin:0">Cuando apartes un medicamento, verás aquí su estado y el mostrador donde retirarlo.</p></div>`}
+          <div class="card alert-card"><div class="label">Recordatorio</div>
+            <p class="small" style="margin:0">A ${S.who==="yo"?"tu Atorvastatina 20 mg":"la Levotiroxina de Rosa"} le quedan pocos días. Te avisaremos qué farmacias la tienen.</p></div>
+        </div>
+      </section>
+      <section style="display:flex;flex-direction:column;gap:14px">
+        <div class="section-head"><h2>Recetas activas de ${whoName}</h2><span class="small muted">${list.length} recetas vigentes</span></div>
+        <div class="rxs">
+          ${list.map(r=>`
+          <${r.active?`button onclick="go('disponibilidad')"`:"div"} class="card rx ${r.active?"":"dim"}">
+            <div class="label">${r.doc}</div>
+            <h3>${r.n}</h3>
+            <div class="small muted">${r.p} · <span class="mono">${r.id}</span></div>
+            <div class="foot">${r.active?`<span class="linkish">Ver dónde está disponible ›</span>`:`<span class="small muted">${r.note}</span>`}</div>
+          </${r.active?"button":"div"}>`).join("")}
+        </div>
+      </section>`;
+  }
+
+  if(S.screen==="disponibilidad"){
+    const sorted=[...PH].sort((a,b)=>(b.best?1:0)-(a.best?1:0)||(a.state==="bad")-(b.state==="bad")||parseFloat(a.dist.replace(",","."))-parseFloat(b.dist.replace(",",".")));
+    m.innerHTML=`
+      ${crumbs([["Mis recetas","inicio"],["Losartán potásico 50 mg"]])}
+      <div class="section-head">
+        <div><h1 style="font-size:30px">Losartán potásico 50 mg</h1>
+        <div class="small muted">Caja × 30 tabletas · <span class="mono">RX-2026-004817</span> · 4 farmacias en un radio de 5 km</div></div>
+        <div class="filters">
+          <select id="radio" aria-label="Radio de búsqueda"><option>Hasta 5 km</option><option>Hasta 3 km</option><option>Hasta 10 km</option></select>
+          <select id="orden" aria-label="Ordenar"><option>Mejor opción</option><option>Más cerca</option><option>Más stock</option></select>
+          <button class="chip on">Abiertas ahora</button><button class="chip">Con stock</button>
+        </div>
+      </div>
+      <div class="results">
+        <div class="list">
+          ${sorted.map(p=>`
+          <div class="card ph ${S.sel===p.id?"sel":""}" onclick="S.sel='${p.id}';render()" role="button" tabindex="0">
+            ${p.best?`<span class="best">Mejor opción</span>`:""}
+            <div class="ph-top"><h3>${p.name}</h3>${badge(p)}</div>
+            <div class="meta"><span>${p.addr}</span><span>${p.dist} · ${p.time}</span><span>${p.hours}</span></div>
+            ${p.restock?`<div class="small" style="color:var(--warn);font-weight:600">Reposición programada: llega el ${p.restock}</div>`:""}
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <span class="fresh"><i></i>Stock verificado ${p.fresh}</span>
+              ${p.state!=="bad"?`<button class="btn" style="padding:8px 14px;font-size:14px" onclick="event.stopPropagation();S.sel='${p.id}';go('farmacia')">Ver y reservar</button>`
+                :`<button class="btn ghost" style="padding:8px 14px;font-size:14px" onclick="event.stopPropagation()">Avisarme cuando llegue</button>`}
+            </div>
+          </div>`).join("")}
+        </div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="map">${mapSvg()}</div>
+          <div class="legend"><span><i style="background:var(--ok)"></i>Con stock</span><span><i style="background:var(--warn)"></i>Pocas unidades</span><span><i style="background:var(--bad)"></i>Sin stock</span><span><i style="background:var(--accent)"></i>Tu ubicación</span></div>
+        </div>
+      </div>`;
+  }
+
+  if(S.screen==="farmacia"){
+    let p=selPh(); if(p.state==="bad"){S.sel="parque";p=selPh();}
+    m.innerHTML=`
+      ${crumbs([["Mis recetas","inicio"],["Losartán 50 mg","disponibilidad"],[p.name]])}
+      <div class="detail">
+        <div class="detail-main">
+          <div><h1 style="font-size:30px">${p.name}</h1><div class="small muted">${p.addr} · ${p.hours}</div></div>
+          <div class="stockrow">
+            <div class="card stat"><div class="label">Unidades disponibles</div><div class="v ${p.state==="ok"?"ok":""}">${p.stock}</div><span class="fresh"><i></i>Verificado ${p.fresh}</span></div>
+            <div class="card stat"><div class="label">Distancia</div><div class="v">${p.dist}</div><span class="small muted">${p.time}</span></div>
+            <div class="card stat"><div class="label">Espera en mostrador</div><div class="v">~5 min</div><span class="small muted">Promedio de la última hora</span></div>
+          </div>
+          <div class="card">
+            <div class="label" style="margin-bottom:12px">Medicamento</div>
+            <dl class="kv">
+              <dt>Nombre</dt><dd>Losartán potásico 50 mg</dd>
+              <dt>Presentación</dt><dd>Caja × 30 tabletas recubiertas</dd>
+              <dt>Receta</dt><dd class="mono">RX-2026-004817</dd>
+              <dt>Lugar de retiro</dt><dd>${p.counter}</dd>
+            </dl>
+          </div>
+          <div class="card">
+            <div class="label" style="margin-bottom:10px">Últimos movimientos de este medicamento</div>
+            <div class="tbl"><table class="hist">
+              <thead><tr><th>Hora</th><th>Movimiento</th><th>Cambio</th><th>Stock</th></tr></thead>
+              <tbody>
+                <tr><td class="mono">16:38</td><td>Venta verificada por escaneo</td><td class="mono">−1</td><td class="mono">${p.stock}</td></tr>
+                <tr><td class="mono">15:52</td><td>Devolución de reserva no retirada</td><td class="mono">+1</td><td class="mono">${p.stock+1}</td></tr>
+                <tr><td class="mono">14:10</td><td>Venta verificada por escaneo</td><td class="mono">−2</td><td class="mono">${p.stock}</td></tr>
+                <tr><td class="mono">09:05</td><td>Ingreso de proveedor · lote L24-118</td><td class="mono">+20</td><td class="mono">${p.stock+2}</td></tr>
+              </tbody></table></div>
+          </div>
+        </div>
+        <div class="card reserve">
+          <h3>Reservar en esta farmacia</h3>
+          <p class="small muted" style="margin:0">Apartamos 1 caja a tu nombre y la preparamos con tu receta. Te avisamos cuando esté lista.</p>
+          <dl class="kv small">
+            <dt>Para</dt><dd>${S.who==="yo"?"María Quispe":"Rosa Quispe"}</dd>
+            <dt>Cantidad</dt><dd>1 caja</dd>
+            <dt>Reserva válida</dt><dd>Hasta hoy 21:00</dd>
+            <dt>Listo aprox.</dt><dd>En 15 minutos</dd>
+          </dl>
+          <button class="btn block" onclick="reservar()">Reservar y preparar mi receta</button>
+          <button class="btn ghost block">Cómo llegar</button>
+          <p class="small muted" style="margin:0">El pago se realiza en la farmacia al retirar.</p>
+        </div>
+      </div>`;
+  }
+
+  if(S.screen==="reserva"){
+    if(S.status<0){
+      m.innerHTML=`${crumbs([["Mis recetas","inicio"],["Mis reservas"]])}
+        <div class="card" style="max-width:560px;display:flex;flex-direction:column;gap:12px"><h2 style="font-size:22px">No tienes reservas activas</h2>
+        <p class="muted" style="margin:0">Busca tu medicamento y reserva en la farmacia que prefieras.</p>
+        <button class="btn" style="align-self:flex-start" onclick="go('disponibilidad')">Buscar disponibilidad</button></div>`;
+    } else {
+      const p=PH.find(x=>x.id==="parque");
+      const ev=[["16:41","Reserva recibida por Farmacia del Parque"]];
+      if(S.status>=1)ev.push(["16:44","Farmacéutico validó la receta RX-2026-004817"]);
+      if(S.status>=2)ev.push(["16:55","Caja escaneada y lista en Mostrador 2"]);
+      if(S.arrived)ev.push(["17:08","Avisaste que llegaste a la farmacia"]);
+      if(S.status>=3)ev.push(["17:10","Medicamento entregado"]);
+      m.innerHTML=`
+        ${crumbs([["Mis recetas","inicio"],["Mis reservas"],])}
+        <div class="section-head"><div><h1 style="font-size:30px">Reserva <span class="mono" style="font-size:.8em">RES-7F3K</span></h1>
+          <div class="small muted">Losartán potásico 50 mg · ${p.name} · ${p.addr}</div></div>
+          ${S.status>=3?`<span class="badge b-ok">Retirada</span>`:S.status>=2?`<span class="badge b-ok">Lista para retirar</span>`:`<span class="badge b-warn">En curso</span>`}</div>
+        <div class="card"><ol class="tracker">
+          ${STEPS.map((s,i)=>`<li class="${i<=S.status?"done":""} ${i===S.status+1?"now":""}"><div class="dot">${i<=S.status?"✓":i+1}</div><div><b>${s[0]}</b><span>${s[1]}</span></div></li>`).join("")}
+        </ol></div>
+        <div class="resv">
+          <div class="card pickup">
+            ${S.status<2?`
+              <div class="label">Retiro</div>
+              <h2 style="font-size:22px">Te avisaremos cuando esté lista</h2>
+              <p class="muted" style="margin:0">Tiempo estimado: 15 minutos. Recibirás un aviso en esta página y por correo con el mostrador donde retirarla.</p>
+`
+            :S.status>=3?`
+              <div class="label">Retirada</div>
+              <h2 style="font-size:22px">Medicamento entregado</h2>
+              <p class="muted" style="margin:0">Te recordaremos la próxima reposición el 26 de octubre y te mostraremos qué farmacias la tienen.</p>
+              <button class="btn ghost" onclick="go('inicio')">Volver a mis recetas</button>`
+            :!S.arrived?`
+              <div class="label">Dirígete a</div>
+              <div class="counter">Mostrador 2</div>
+              <p class="muted" style="margin:0">Retiro rápido, a la derecha de la entrada. No necesitas hacer la fila general.</p>
+              <button class="btn" onclick="llegue()">Avisar que llegué</button>`
+            :`
+              <div class="label">La farmacia sabe que llegaste</div>
+              <h2 style="font-size:22px">Muestra este código en el Mostrador 2</h2>
+              <div class="codebox">${qr()}<div class="code">7F3K</div></div>
+              <p class="small muted" style="margin:0">Espera estimada: 2 minutos.</p>`}
+          </div>
+          <div class="card" style="display:flex;flex-direction:column;gap:12px">
+            <div class="label">Historial de la reserva</div>
+            <ul class="events">${ev.map(e=>`<li><time>${e[0]}</time><span>${e[1]}</span></li>`).join("")}</ul>
+          </div>
+        </div>`;
+    }
+  }
+
+}
+
+function later(ms,fn){S.timers.push(setTimeout(fn,ms));}
+function clearTimers(){S.timers.forEach(clearTimeout);S.timers=[];}
+function reservar(){
+  clearTimers();S.status=0;S.arrived=false;go("reserva");
+  later(4000,()=>{S.status=1;render();});
+  later(9000,()=>{S.status=2;render();$("toast").classList.add("show");later(6000,hideToast);});
+}
+function llegue(){S.arrived=true;render();later(5000,()=>{S.status=3;render();});}
+function hideToast(){$("toast").classList.remove("show");}
+render();
+</script>
+</body>
+</html>

@@ -161,7 +161,7 @@ export default {
       on(main, "click", "[data-cancel]", () => { confirmCancel = true; draw(); }),
       on(main, "click", "[data-cancel-no]", () => { confirmCancel = false; draw(); }),
       on(main, "click", "[data-cancel-yes]", (_, b) => { b.disabled = true; act("cancel"); }),
-      on(main, "click", "[data-speak]", () => speak(spoken(r))),
+      on(main, "click", "[data-speak]", (_, b) => speak(spoken(r), b)),
       on(main, "click", "[data-share]", () => navigator.share({ title: "MiReceta Cerca", text: shareText(r) }).catch(() => {})),
     ];
     return () => {

@@ -45,7 +45,7 @@ export default {
       </div>`);
     const off = on(main, "click", "[data-say]", (_, b) => {
       const [q, a] = TOPICS[Number(b.dataset.say)];
-      speak(`${q} ${a}`);
+      speak(`${q} ${a}`, b);
     });
     return () => { off(); stopSpeaking(); };
   },

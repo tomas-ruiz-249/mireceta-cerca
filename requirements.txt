@@ -1,4 +1,7 @@
 fastapi>=0.115
-uvicorn[standard]>=0.30
+# Sin [standard]: ese extra trae pyyaml, que no tiene versión precompilada para Python 3.15
+# en Windows y exige un compilador de C. La app no lo necesita.
+uvicorn>=0.30
+watchfiles>=0.20   # recarga automática con --reload
 segno>=1.6
-tzdata>=2024.1
+tzdata>=2024.1     # zonas horarias en Windows (America/Bogota)

@@ -52,6 +52,7 @@ git --version
 ```
 
 Python debe decir **3.12** o un número mayor. Si dice 3.11 o menos, instale una versión nueva.
+La versión más probada es **3.13**; las muy nuevas (3.15) también funcionan.
 
 ---
 
@@ -67,6 +68,10 @@ Python debe decir **3.12** o un número mayor. Si dice 3.11 o menos, instale una
    el ícono de **Extensiones** (cuadritos) en la barra lateral.
 
 > Sin VS Code, por terminal: `git clone https://github.com/tomas-ruiz-249/mireceta-cerca.git && cd mireceta-cerca`
+>
+> ¿Descargó el ZIP desde GitHub (**Code → Download ZIP**)? También sirve: descomprímalo y en VS Code use
+> **Archivo → Abrir carpeta…** con la carpeta `mireceta-cerca-main`. Tenga en cuenta que el ZIP no se
+> actualiza solo: para recibir cambios, descárguelo de nuevo (o mejor, use *Git: Clone*).
 
 ---
 
@@ -205,7 +210,8 @@ O en VS Code: ícono del matraz 🧪 (**Testing**) en la barra lateral → ▶ *
 | `The virtual environment was not created successfully because ensurepip is not available` (Ubuntu/Debian) | `sudo apt install python3-venv` y repita el paso 3. Si ya existe una carpeta `.venv` rota, bórrela primero. |
 | `No module named fastapi` / `uvicorn` no se reconoce | No instaló las dependencias o VS Code usa otro Python: repita el paso 3 y elija el intérprete `.venv`. |
 | PowerShell: *"la ejecución de scripts está deshabilitada en este sistema"* | Ejecute una vez `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` y abra una terminal nueva. |
-| `ZoneInfoNotFoundError: America/Bogota` | Faltan dependencias: `pip install -r requirements-dev.txt` (instala `tzdata`). |
+| `ZoneInfoNotFoundError: America/Bogota` | La instalación del paso 3 falló o no se hizo (busque más arriba un `ERROR` de pip). Corrija ese error y repita `pip install -r requirements-dev.txt`, que instala `tzdata`. |
+| `Microsoft Visual C++ 14.0 or greater is required` / `Failed building wheel for pyyaml` | Tiene una versión vieja de `requirements.txt` (con `uvicorn[standard]`). Descargue la versión actual del proyecto, o instale directamente: `.venv\Scripts\pip install fastapi uvicorn watchfiles segno tzdata pytest httpx`. No instale los Build Tools: no hacen falta. |
 | `Address already in use` / el puerto 8000 está ocupado | Ya hay un servidor abierto: ciérrelo, o use otro puerto: `uvicorn app.main:app --reload --port 8001`. |
 | No puedo ingresar (vuelve a la pantalla de ingreso) | En `.env`, `MIRECETA_COOKIE_SECURE` debe ser `0` en su computador. |
 | El usuario `dispensador1` no funciona | La base no tiene datos de ejemplo: ejecute el paso 5. |

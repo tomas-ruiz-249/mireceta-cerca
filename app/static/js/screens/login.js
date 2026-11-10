@@ -40,7 +40,7 @@ export default {
         <p class="muted">¿No usa celular? Llame a su droguería y dé su cédula: ellos le hacen la reserva.</p>
         <a class="btn secondary" href="#/ayuda">❓ Más ayuda</a>
       </section>
-      <p class="center small"><a href="/personal">Ingreso para el personal de la droguería</a></p>`);
+      <p class="center small"><a href="/personal">Personal de la droguería</a> · <a href="/medico">Personal médico</a></p>`);
 
     $("#cedula", main).focus();
     $("#login", main).addEventListener("submit", async (e) => {

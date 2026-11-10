@@ -173,9 +173,10 @@ Cuando vea `Uvicorn running on http://127.0.0.1:8000`, abra el navegador:
 |---|---|---|
 | Paciente | http://localhost:8000 | cédula `52123456`, PIN `1234` |
 | Dispensador | http://localhost:8000/personal | `dispensador1` / `farmacia` |
+| Médico | http://localhost:8000/medico | `medico1` / `consulta` (también `medico2`, `medico3`) |
 
 - Cada dispensador ve **solo su droguería**: `dispensador1` es la Droguería del Parque, `dispensador2`…`dispensador6` las demás. Si reservó en otra droguería, entre con el número que corresponde (la reserva dice el nombre de la droguería).
-- Para ver el tiempo real, abra las dos apps lado a lado (o una en ventana de incógnito).
+- Para ver el tiempo real, abra las apps lado a lado (o en ventanas de incógnito): médico → emite la fórmula, paciente → la ve y la reserva, dispensador → la entrega.
 - **Detener:** `Ctrl+C` en la terminal, o el cuadrado rojo ⏹ si usó F5.
 
 ### Probar desde el celular (misma red Wi-Fi)
@@ -214,7 +215,7 @@ O en VS Code: ícono del matraz 🧪 (**Testing**) en la barra lateral → ▶ *
 | `Microsoft Visual C++ 14.0 or greater is required` / `Failed building wheel for pyyaml` | Tiene una versión vieja de `requirements.txt` (con `uvicorn[standard]`). Descargue la versión actual del proyecto, o instale directamente: `.venv\Scripts\pip install fastapi uvicorn watchfiles segno tzdata pytest httpx`. No instale los Build Tools: no hacen falta. |
 | `Address already in use` / el puerto 8000 está ocupado | Ya hay un servidor abierto: ciérrelo, o use otro puerto: `uvicorn app.main:app --reload --port 8001`. |
 | No puedo ingresar (vuelve a la pantalla de ingreso) | En `.env`, `MIRECETA_COOKIE_SECURE` debe ser `0` en su computador. |
-| El usuario `dispensador1` no funciona | La base no tiene datos de ejemplo: ejecute el paso 5. |
+| El usuario `dispensador1` o `medico1` no funciona | La base no tiene datos de ejemplo (o es de antes de la app del médico): ejecute el paso 5. |
 | El dispensador no ve la reserva | La reserva es de otra droguería: entre con `dispensador2`…`6`. |
 | "Escuchar en voz alta" no suena (Linux) | Instale voces: `sudo pacman -S speech-dispatcher espeak-ng` (Arch) o `sudo apt install speech-dispatcher espeak-ng` (Ubuntu) y reinicie el navegador. En celulares, Windows y Mac funciona sin instalar nada. |
 | `python3 --version` dice 3.11 o menos | Instale Python 3.12+ y vuelva a crear el entorno: borre `.venv` y repita el paso 3. |

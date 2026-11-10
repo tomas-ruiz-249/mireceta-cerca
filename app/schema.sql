@@ -98,7 +98,10 @@ CREATE TABLE IF NOT EXISTS prescriptions (
     instructions   TEXT,
     issued_at      TEXT NOT NULL,
     expires_at     TEXT NOT NULL,
-    dispensed_at   TEXT
+    dispensed_at   TEXT,
+    doctor_id      INTEGER REFERENCES doctors(id),   -- médico que la emitió
+    cancelled_at   TEXT,                             -- el médico la anuló
+    cancel_reason  TEXT
 );
 
 -- status: recibida | en_preparacion | lista | retirada | cancelada | vencida
@@ -167,7 +170,7 @@ CREATE TABLE IF NOT EXISTS staff_sessions (
 
 -- Eventos en vivo. Se escriben en la MISMA transacción que el cambio, así que
 -- quien escucha nunca recibe un aviso de algo que no quedó guardado.
--- channel: 'pharmacy:<id>' (app del dispensador) o 'user:<id>' (app del paciente).
+-- channel: 'pharmacy:<id>' (dispensador), 'user:<id>' (paciente) o 'doctor:<id>' (médico).
 CREATE TABLE IF NOT EXISTS live_events (
     id          INTEGER PRIMARY KEY,
     channel     TEXT NOT NULL,
@@ -176,3 +179,24 @@ CREATE TABLE IF NOT EXISTS live_events (
     created_at  TEXT NOT NULL
 );
 CREATE INDEX IF NOT EXISTS ix_live ON live_events(channel, id);
+
+-- Personal médico (app del médico). Las fórmulas las emite un médico registrado,
+-- nunca el paciente ni la droguería.
+CREATE TABLE IF NOT EXISTS doctors (
+    id              INTEGER PRIMARY KEY,
+    username        TEXT NOT NULL UNIQUE,
+    name            TEXT NOT NULL,             -- como aparece en la fórmula: 'Dra. Ana Paredes'
+    specialty       TEXT NOT NULL,
+    license         TEXT,                      -- registro médico
+    password_hash   TEXT NOT NULL,
+    failed_logins   INTEGER NOT NULL DEFAULT 0,
+    locked_until    TEXT,
+    active          INTEGER NOT NULL DEFAULT 1,
+    created_at      TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS doctor_sessions (
+    token_hash  TEXT PRIMARY KEY,
+    doctor_id   INTEGER NOT NULL REFERENCES doctors(id) ON DELETE CASCADE,
+    expires_at  TEXT NOT NULL
+);

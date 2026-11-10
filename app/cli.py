@@ -12,23 +12,27 @@ Ejemplos:
     python -m app.cli reservations --active            # ver reservas
     python -m app.cli advance 5                        # pasar la reserva 5 al siguiente paso
     python -m app.cli pickup 7F3K                      # entregar por código
-    python -m app.cli prescription-add 52123456 1 --prescriber "Dra. Paredes" --days 30
+    python -m app.cli prescription-add 52123456 1 --doctor medico1 --days 30   # fórmula a nombre de un médico
     python -m app.cli user-add 79111222 Juan Pérez 4321
     python -m app.cli staff-add 1 lmora "Laura Mora" clave123   # personal de la droguería 1
     python -m app.cli staff                                     # listar personal
+    python -m app.cli doctor-add lgomez "Dra. Laura Gómez" Pediatría clave123 --license "RM 25-1234"
+    python -m app.cli doctors                                   # listar médicos
     python -m app.cli medication-image 1 ~/fotos/losartan.jpg   # foto del producto
     python -m app.cli medication-image 1 --remove               # volver al dibujo de la caja
 """
 
 import argparse
 import sys
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
 
 from .config import settings
-from .db import connect, init_schema, iso, now, transaction
-from .seed import DEMO_CEDULA, DEMO_PIN, DEMO_STAFF_PASSWORD, DEMO_STAFF_USER, seed
-from .services import auth, images, reservations, staff, stock
+from .db import connect, init_schema, transaction
+from .seed import (
+    DEMO_CEDULA, DEMO_DOCTOR_PASSWORD, DEMO_DOCTOR_USER, DEMO_PIN, DEMO_STAFF_PASSWORD, DEMO_STAFF_USER, seed,
+)
+from .services import auth, images, prescriptions, reservations, staff, stock
 
 
 def _table(rows, cols):
@@ -50,7 +54,9 @@ def cmd_reset(conn, args):
         print(f"Base creada con datos de ejemplo.\n"
               f"  Paciente (http://localhost:8000):         cédula {DEMO_CEDULA}, PIN {DEMO_PIN}\n"
               f"  Dispensador (http://localhost:8000/personal): usuario {DEMO_STAFF_USER}, "
-              f"contraseña {DEMO_STAFF_PASSWORD}  (dispensador2…6 para las otras droguerías)")
+              f"contraseña {DEMO_STAFF_PASSWORD}  (dispensador2…6 para las otras droguerías)\n"
+              f"  Médico (http://localhost:8000/medico):    usuario {DEMO_DOCTOR_USER}, "
+              f"contraseña {DEMO_DOCTOR_PASSWORD}  (también medico2 y medico3)")
     else:
         print("Base vacía creada.")
 
@@ -144,22 +150,32 @@ def cmd_cancel(conn, args):
 
 
 def cmd_prescription_add(conn, args):
+    """Fórmula a nombre de un médico registrado (equivale a emitirla desde /medico)."""
+    doctor = conn.execute("SELECT * FROM doctors WHERE username = ? AND active = 1", (args.doctor.lower(),)).fetchone()
+    if not doctor:
+        sys.exit("No hay ningún médico con ese usuario (vea: python -m app.cli doctors)")
     profile = conn.execute(
-        "SELECT p.id FROM profiles p JOIN users u ON u.id = p.user_id WHERE p.cedula = ? OR (u.cedula = ? AND p.is_self = 1) "
-        "ORDER BY p.is_self = 0 LIMIT 1", (args.cedula, args.cedula),
+        "SELECT p.id FROM profiles p WHERE p.cedula = ? ORDER BY p.is_self DESC, p.id LIMIT 1", (args.cedula,),
     ).fetchone()
     if not profile:
         sys.exit("No hay ninguna persona registrada con esa cédula")
-    t = now()
-    count = conn.execute("SELECT COUNT(*) FROM prescriptions").fetchone()[0]
-    code = args.code or f"FM-{t.year}-{5000 + count:06d}"
-    conn.execute(
-        "INSERT INTO prescriptions (profile_id, medication_id, code, prescriber, specialty, quantity, instructions, "
-        "issued_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-        (profile["id"], args.medication, code, args.prescriber, args.specialty, args.quantity, args.instructions,
-         iso(t), iso(t + timedelta(days=args.days))),
-    )
-    print(f"Fórmula {code} creada.")
+    ids = prescriptions.issue(conn, doctor, profile["id"], [
+        {"medication_id": args.medication, "quantity": args.quantity, "instructions": args.instructions},
+    ], args.days)
+    code = conn.execute("SELECT code FROM prescriptions WHERE id = ?", (ids[0],)).fetchone()["code"]
+    print(f"Fórmula {code} emitida por {doctor['name']}.")
+
+
+def cmd_doctors(conn, args):
+    rows = conn.execute("SELECT id, username, name, specialty, license, active FROM doctors ORDER BY id").fetchall()
+    _table([(r["id"], r["username"], r["name"], r["specialty"], r["license"] or "", "sí" if r["active"] else "no")
+            for r in rows], ["id", "usuario", "nombre", "especialidad", "registro", "activo"])
+
+
+def cmd_doctor_add(conn, args):
+    with transaction(conn):
+        did = staff.create_doctor(conn, args.username, args.name, args.specialty, args.password, args.license)
+    print(f"Médico {did} creado. Ingresa en /medico con el usuario «{args.username.lower()}».")
 
 
 def cmd_user_add(conn, args):
@@ -217,16 +233,23 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("code")
     s.set_defaults(fn=cmd_pickup)
 
-    s = sub.add_parser("prescription-add", help="cargar una fórmula médica")
+    s = sub.add_parser("prescription-add", help="emitir una fórmula a nombre de un médico")
     s.add_argument("cedula", help="cédula del paciente (usuario o familiar)")
     s.add_argument("medication", type=int)
-    s.add_argument("--prescriber", required=True)
-    s.add_argument("--specialty")
+    s.add_argument("--doctor", required=True, help="usuario del médico (python -m app.cli doctors)")
     s.add_argument("--quantity", type=int, default=1)
     s.add_argument("--instructions")
     s.add_argument("--days", type=int, default=30, help="días de vigencia")
-    s.add_argument("--code")
     s.set_defaults(fn=cmd_prescription_add)
+
+    sub.add_parser("doctors", help="listar el personal médico").set_defaults(fn=cmd_doctors)
+    s = sub.add_parser("doctor-add", help="crear una cuenta para un médico")
+    s.add_argument("username")
+    s.add_argument("name", help='como aparece en la fórmula, p. ej. "Dra. Laura Gómez"')
+    s.add_argument("specialty")
+    s.add_argument("password")
+    s.add_argument("--license", help="registro médico")
+    s.set_defaults(fn=cmd_doctor_add)
 
     s = sub.add_parser("medication-image", help="cargar o quitar la foto de un medicamento")
     s.add_argument("medication", type=int)
@@ -258,7 +281,8 @@ def main(argv=None):
     init_schema(conn)
     try:
         args.fn(conn, args)
-    except (stock.StockError, reservations.ReservationError, auth.AuthError, images.ImageError, ValueError) as e:
+    except (stock.StockError, reservations.ReservationError, prescriptions.PrescriptionError, auth.AuthError,
+            images.ImageError, ValueError) as e:
         sys.exit(f"Error: {e}")
 
 

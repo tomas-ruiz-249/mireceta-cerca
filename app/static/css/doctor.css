@@ -1,0 +1,46 @@
+/* App del médico. Reutiliza staff.css (barra, pestañas, diálogos) y agrega lo propio. */
+
+.rx-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.rx-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: start;
+  background: var(--surface); border: 2px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+.rx-row.changed { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.rx-row .med { font-weight: 700; }
+.rx-row .meta { font-size: .9rem; color: var(--muted); }
+.rx-row .side { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.rx-row .link-btn { font-size: .9rem; }
+@media (max-width: 560px) { .rx-row { grid-template-columns: 1fr; } .rx-row .side { align-items: flex-start; } }
+
+.items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.item { border: 2px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  background: var(--surface); }
+.item .head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.item .row-fields { display: grid; grid-template-columns: 7em 1fr; gap: 10px; }
+@media (max-width: 560px) { .item .row-fields { grid-template-columns: 1fr; } }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick .chip { min-height: 36px; font-size: .9rem; padding: 0 10px; }
+
+.results { display: flex; flex-direction: column; gap: 8px; }
+.result { display: flex; align-items: center; gap: 12px; padding: 8px; border: 2px solid var(--line); border-radius: 12px;
+  background: var(--surface); }
+.result .stack { flex: 1; }
+.result .btn { width: auto; min-height: 44px; }
+
+.target { display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 2px solid var(--line); border-radius: 12px; }
+.target input { width: 1.4em; height: 1.4em; margin-top: 3px; }
+.target:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Impresión: solo la fórmula, en blanco y negro, sin la app alrededor. */
+#printArea { display: none; }
+@media print {
+  body > *:not(#printArea) { display: none !important; }
+  #printArea { display: block; color: #000; background: #fff; font-size: 12pt; padding: 0; }
+  #printArea h1 { font-size: 18pt; margin: 0 0 4pt; }
+  #printArea .doc { border-bottom: 2px solid #000; padding-bottom: 8pt; margin-bottom: 10pt; }
+  #printArea table { width: 100%; border-collapse: collapse; margin: 10pt 0; }
+  #printArea th, #printArea td { text-align: left; border-bottom: 1px solid #999; padding: 6pt 4pt; vertical-align: top; }
+  #printArea .code { font-family: ui-monospace, Menlo, monospace; font-weight: 700; white-space: nowrap; }
+  #printArea .foot { margin-top: 16pt; font-size: 10pt; }
+  #printArea .sign { margin-top: 40pt; border-top: 1px solid #000; width: 60%; padding-top: 4pt; }
+}

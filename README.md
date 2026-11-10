@@ -5,6 +5,8 @@ Pensada para Colombia (ingreso con cédula y PIN, hora de Bogotá) y para person
 
 El prototipo original sigue en `index.html` y su justificación en `patentes-y-radar.md`.
 
+> **Guía rápida:** cómo iniciar, usuarios y contraseñas de cada app → [INICIO.md](INICIO.md)
+
 ## Cómo ejecutarla
 
 Guía completa paso a paso (instalación desde cero, VS Code, variables de entorno y problemas comunes): [VSCODE.md](VSCODE.md). Configuración opcional: copie `.env.example` como `.env`.
@@ -20,10 +22,11 @@ python3 -m venv .venv
 |---|---|---|
 | Paciente | http://localhost:8000 | cédula **52123456**, PIN **1234** |
 | Dispensador (personal de la droguería) | http://localhost:8000/personal | **dispensador1** / **farmacia** (Droguería del Parque; `dispensador2`…`6` para las demás) |
+| Médico | http://localhost:8000/medico | **medico1** / **consulta** (Dra. Ana Paredes; también `medico2` y `medico3`) |
 
-Para ver el tiempo real, abra las dos apps lado a lado: reserve como paciente y la reserva aparece al instante en el tablero; márquela como lista y al paciente le llega el aviso.
+Para ver el tiempo real, abra las apps lado a lado: el médico emite una fórmula y le aparece al instante al paciente; el paciente la reserva y aparece en el tablero de la droguería; la droguería la entrega y el médico la ve como entregada.
 
-> Si ya tenía una base de datos anterior, las tablas nuevas se crean solas al arrancar, pero no tendrá personal: ejecute `reset --demo` o cree uno con `python -m app.cli staff-add 1 usuario "Nombre" clave123`.
+> Si ya tenía una base de datos anterior, las tablas nuevas se crean solas al arrancar, pero no tendrá personal: ejecute `reset --demo` o cree cuentas con `python -m app.cli staff-add 1 usuario "Nombre" clave123` y `python -m app.cli doctor-add usuario "Dra. Nombre" Especialidad clave123`.
 
 Pruebas: `.venv/bin/python -m pytest`
 
@@ -32,7 +35,7 @@ Pruebas: `.venv/bin/python -m pytest`
 | Función | Cómo funciona |
 |---|---|
 | Ingreso | Cédula + PIN de 4 números. El PIN se guarda con hash scrypt; se bloquea 15 min tras 5 intentos fallidos. Sesión de 30 días. |
-| Mis fórmulas | Fórmulas vigentes, entregadas o vencidas de usted o de un familiar. |
+| Mis fórmulas | Las emite el médico (app `/medico`) y aparecen solas, con aviso. Vigentes, entregadas, vencidas o anuladas, de usted o de un familiar. El paciente no puede crear ni cambiar fórmulas. |
 | Buscar | Por nombre, sin importar tildes y con nombres comerciales ("dolex", "aspirina"). |
 | Foto del producto | Cada medicamento muestra la foto de su caja en la búsqueda, la droguería, la confirmación de la reserva y la reserva. Si no se ha cargado una foto, se dibuja una caja con el nombre y la concentración. |
 | Disponibilidad | Usa la ubicación del navegador. Ordena: con stock, abierta ahora, más cerca. Muestra hace cuánto se confirmó la cantidad y cuándo llega la reposición. |
@@ -60,7 +63,7 @@ Si dos personas tocan el mismo pedido a la vez, la segunda recibe "Otra persona 
 
 ### Cómo funciona el tiempo real
 
-Cada cambio guarda una fila en `live_events` **dentro de la misma transacción** (`services/live.py`). Las apps escuchan con `EventSource` (`/api/notifications/stream` y `/api/personal/stream`), reciben el aviso en milisegundos y vuelven a pedir los datos. Los cambios hechos desde la terminal u otro proceso también llegan (en ≤ 1 s). Si se cae la conexión, el navegador reconecta solo y recupera lo que se perdió.
+Cada cambio guarda una fila en `live_events` **dentro de la misma transacción** (`services/live.py`). Las apps escuchan con `EventSource` (`/api/notifications/stream`, `/api/personal/stream` y `/api/medico/stream`), reciben el aviso en milisegundos y vuelven a pedir los datos. Los cambios hechos desde la terminal u otro proceso también llegan (en ≤ 1 s). Si se cae la conexión, el navegador reconecta solo y recupera lo que se perdió.
 
 ## La droguería: herramienta de terminal
 
@@ -74,13 +77,27 @@ python -m app.cli stock-add 1 1 20           # ingreso de 20 cajas (droguería 1
 python -m app.cli stock-add 1 1 -2 --kind venta --scan
 python -m app.cli stock-verify 1 1           # conteo: confirma la cantidad sin cambiarla
 python -m app.cli restock 3 1 2026-10-23 20  # programar una reposición
-python -m app.cli prescription-add 52123456 1 --prescriber "Dra. Paredes" --days 30
+python -m app.cli prescription-add 52123456 1 --doctor medico1 --days 30   # fórmula a nombre de un médico
 python -m app.cli medication-image 1 ~/fotos/losartan.jpg   # foto de la caja (JPG/PNG/WEBP, máx. 5 MB)
 python -m app.cli medication-image 1 --remove               # volver al dibujo
 python -m app.cli staff-add 1 lmora "Laura Mora" clave123   # cuenta de personal para la droguería 1
 python -m app.cli staff                      # listar personal
+python -m app.cli doctor-add lgomez "Dra. Laura Gómez" Pediatría clave123 --license "RM 25-1234"
+python -m app.cli doctors                    # listar médicos
 python -m app.cli --help                     # todos los comandos
 ```
+
+## La app del médico (`/medico`)
+
+Las fórmulas solo las emite personal médico registrado. Misma base de datos y en tiempo real.
+
+| Sección | Qué hace |
+|---|---|
+| Formular | Busca al paciente por cédula. Si la persona está registrada como **familiar** en la cuenta de otra (la hija que le maneja la app a la mamá), la fórmula le llega a esa cuenta; si hay varias, el médico elige. Si no existe, se registra con nombre y celular y se le entrega un **código de activación**. Se agregan uno o varios medicamentos, con cuántas cajas, cómo tomarlo (con botones rápidos) y la vigencia (30 días a 6 meses). La búsqueda muestra en cuántas droguerías hay existencias, para no formular algo agotado en todas. |
+| Emitir | Cada medicamento recibe su código (`FM-2026-005007`). Al paciente le llega un aviso al instante y la fórmula aparece en «Mis fórmulas»; la droguería la ve al buscar la cédula. |
+| Imprimir | Fórmula en papel (con el código de activación si el paciente es nuevo) para quien no usa celular. |
+| Mis fórmulas | Todo lo que emitió, con su estado **en vivo**: vigente → reservada (en qué droguería) → entregada. Filtros por estado. |
+| Anular | Solo quien la emitió, con motivo, y solo si no está reservada ni entregada. El paciente recibe el aviso y ya no puede reservarla. |
 
 ## Cómo está organizado
 
@@ -97,13 +114,15 @@ app/
     availability.py      búsqueda y orden de "mejor opción"
     reservations.py      ciclo de vida de la reserva
     notify.py            avisos; agregue aquí canales nuevos (SMS, WhatsApp)
-    live.py              eventos en vivo (Server-Sent Events) para las dos apps
-    staff.py             cuentas y sesiones del personal de la droguería
+    live.py              eventos en vivo (Server-Sent Events) para las tres apps
+    staff.py             cuentas y sesiones del personal (dispensadores y médicos)
+    prescriptions.py     fórmulas: emitir, anular, estado (vigente, reservada, entregada…)
     images.py            fotos de medicamentos (en data/media/) y dibujo de la caja si no hay foto
     medications.py       cómo se envía un medicamento a la app (incluye la dirección de su foto)
     hours.py, geo.py, text.py
   routers/             una ruta de la API por tema (auth, perfiles, catálogo, droguerías, reservas, avisos)
     staff.py             API del dispensador (/api/personal/...)
+    doctors.py           API del médico (/api/medico/...)
   static/
     css/tokens.css       colores, letra y tamaños (cambie aquí el aspecto de toda la app)
     css/components.css   botones, tarjetas, etc.
@@ -111,10 +130,13 @@ app/
     js/screens/          una pantalla por archivo
     js/ui/components.js  piezas reutilizables (tarjeta de droguería, estado del stock…)
     js/ui/speech.js      leer en voz alta y dictado
-    js/live.js           conexión en vivo (la usan las dos apps)
+    js/live.js           conexión en vivo (la usan las tres apps)
     personal.html        app del dispensador
     js/staff/            main.js (ingreso, pestañas, sonido), queue.js (tablero), patients.js, inventory.js
     css/staff.css        estilos propios del mostrador
+    medico.html          app del médico
+    js/doctor/           main.js (ingreso, pestañas), prescribe.js (formular), history.js (mis fórmulas), rx.js
+    css/doctor.css       estilos del médico y de la fórmula impresa
 tests/
 ```
 
@@ -132,7 +154,7 @@ tests/
 
 - Una sola columna, letra base de 20 px y tres tamaños a elegir (Mi cuenta → Tamaño de la letra).
 - Botones de al menos 60 px de alto y a todo el ancho; menú inferior fijo con icono **y** texto.
-- Brecha digital: quien no tiene celular inteligente reserva por teléfono o en el mostrador (la droguería lo hace por él) y puede activar la app después con un código; un familiar puede reservar por él (perfil familiar) o recogerlo con el código enviado por WhatsApp.
+- Brecha digital: el paciente no tiene que escribir su fórmula: se la envía el médico. Quien no usa la app la recibe impresa y la droguería la encuentra con su cédula. Quien no tiene celular inteligente reserva por teléfono o en el mostrador (la droguería lo hace por él) y puede activar la app después con un código; un familiar puede reservar por él (perfil familiar) o recogerlo con el código enviado por WhatsApp.
 - Voz para leer y para buscar; vibración y aviso grande cuando el pedido está listo.
 - En la mejor opción, "Reservar aquí" lleva directo a la confirmación (un paso menos).
 - El estado del stock nunca depende solo del color: "✓ Sí tiene", "! Quedan pocas", "✕ No tiene".
@@ -142,9 +164,9 @@ tests/
 
 ## Pendiente para producción
 
-- Administración del personal desde la web (hoy: `app/cli.py staff-add`).
+- Administración del personal desde la web (hoy: `app/cli.py staff-add` y `doctor-add`), y verificación del registro médico (ReTHUS).
 - Con varios servidores detrás de un balanceador, los eventos siguen funcionando (viven en la base), pero conviene pasar de SQLite a PostgreSQL.
-- Integración real con inventarios de droguerías y con fórmulas de las EPS/MIPRES (hoy: datos cargados a mano).
+- Integración real con inventarios de droguerías y con MIPRES / la historia clínica de las EPS (hoy las fórmulas se emiten en `/medico`). Firma electrónica de la fórmula.
 - Fotos reales de los productos: hay que cargarlas con `medication-image` (fotos propias o con permiso del fabricante).
 - Envío de SMS/WhatsApp (el canal se enchufa en `notify.py`).
 - Recuperación de PIN olvidado (requiere verificar el celular por SMS).

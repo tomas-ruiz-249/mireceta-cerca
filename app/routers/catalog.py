@@ -51,14 +51,17 @@ def prescriptions(profile_id: int, user=Depends(current_user), conn: sqlite3.Con
     rows = conn.execute(
         """SELECT p.*, m.name, m.strength, m.presentation, m.image FROM prescriptions p
            JOIN medications m ON m.id = p.medication_id
-           WHERE p.profile_id = ? ORDER BY p.dispensed_at IS NOT NULL, p.expires_at""",
+           WHERE p.profile_id = ?
+           ORDER BY p.cancelled_at IS NOT NULL, p.dispensed_at IS NOT NULL, p.issued_at DESC""",
         (profile_id,),
     ).fetchall()
     today = now().date()
     out = []
     for r in rows:
         expires = parse(r["expires_at"]).date()
-        if r["dispensed_at"]:
+        if r["cancelled_at"]:
+            state = "anulada"
+        elif r["dispensed_at"]:
             state = "entregada"
         elif expires < today:
             state = "vencida"
@@ -67,7 +70,8 @@ def prescriptions(profile_id: int, user=Depends(current_user), conn: sqlite3.Con
         out.append({
             "id": r["id"], "code": r["code"], "prescriber": r["prescriber"], "specialty": r["specialty"],
             "quantity": r["quantity"], "instructions": r["instructions"],
-            "expires_at": r["expires_at"], "dispensed_at": r["dispensed_at"], "state": state,
+            "issued_at": r["issued_at"], "expires_at": r["expires_at"], "dispensed_at": r["dispensed_at"],
+            "state": state, "cancel_reason": r["cancel_reason"],
             "days_left": (expires - today).days,
             "medication": med_out({**dict(r), "id": r["medication_id"]}),
         })

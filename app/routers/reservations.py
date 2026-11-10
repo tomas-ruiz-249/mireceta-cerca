@@ -4,10 +4,10 @@ import sqlite3
 import segno
 from fastapi import APIRouter, Depends, HTTPException, Response
 
-from ..db import get_db, now, parse
+from ..db import get_db
 from ..deps import current_user, own_profile
 from ..schemas import ReservationIn
-from ..services import reservations as svc
+from ..services import prescriptions as rx_svc, reservations as svc
 
 router = APIRouter(prefix="/api/reservations", tags=["reservas"])
 
@@ -34,10 +34,8 @@ def create(body: ReservationIn, user=Depends(current_user), conn: sqlite3.Connec
                           (body.prescription_id, body.profile_id)).fetchone()
         if not rx or rx["medication_id"] != body.medication_id:
             raise HTTPException(400, "La fórmula no corresponde a este medicamento")
-        if rx["dispensed_at"]:
-            raise HTTPException(409, "Esta fórmula ya fue entregada")
-        if parse(rx["expires_at"]) < now():
-            raise HTTPException(409, "Esta fórmula está vencida. Pida una nueva a su médico")
+        if problem := rx_svc.usable(rx):
+            raise HTTPException(409, problem)
     try:
         rid = svc.create(conn, user["id"], body.profile_id, body.pharmacy_id, body.medication_id,
                          body.quantity, body.prescription_id)

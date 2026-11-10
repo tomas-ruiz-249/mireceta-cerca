@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es-CO" data-app="doctor">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#0E6B58">
+<meta name="robots" content="noindex">
+<title>Consultorio · MiReceta Cerca</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,700&display=swap">
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/base.css">
+<link rel="stylesheet" href="/static/css/components.css">
+<link rel="stylesheet" href="/static/css/staff.css">
+<link rel="stylesheet" href="/static/css/doctor.css">
+</head>
+<body>
+  <a class="skip" href="#main">Ir al contenido</a>
+  <header class="top staff-top" id="top" hidden>
+    <div class="brand"><span class="mark" aria-hidden="true">Dr</span>
+      <span><span id="docName">Médico</span><span class="who" id="docInfo"></span></span></div>
+    <div class="top-actions">
+      <span class="live-dot" id="liveDot" role="status" aria-live="polite">Conectando…</span>
+      <button class="chip" type="button" id="logoutBtn">Salir</button>
+    </div>
+  </header>
+
+  <nav class="staff-tabs" id="tabs" aria-label="Secciones" hidden>
+    <a href="#formular" data-tab="formular">📝 Formular</a>
+    <a href="#formulas" data-tab="formulas">📋 Mis fórmulas</a>
+  </nav>
+
+  <div class="toasts" id="toasts" role="status" aria-live="assertive"></div>
+
+  <main id="main" tabindex="-1"></main>
+
+  <dialog id="dlg" class="dlg"></dialog>
+
+  <!-- Se llena justo antes de imprimir: la fórmula en papel para quien no usa celular. -->
+  <section id="printArea" aria-hidden="true"></section>
+
+  <script type="module" src="/static/js/doctor/main.js"></script>
+</body>
+</html>

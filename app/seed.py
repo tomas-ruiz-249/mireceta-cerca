@@ -60,6 +60,15 @@ DEMO_STAFF_USER = "dispensador1"
 DEMO_STAFF_PASSWORD = "farmacia"
 STAFF_NAMES = ["Carlos Méndez", "Luisa Ortiz", "Andrés Pinto", "Sandra Ruiz", "Jorge Díaz", "Paola Vega"]
 
+# Personal médico de ejemplo (app del médico, /medico): (usuario, nombre, especialidad, registro médico)
+DEMO_DOCTOR_USER = "medico1"
+DEMO_DOCTOR_PASSWORD = "consulta"
+DOCTORS = [
+    ("medico1", "Dra. Ana Paredes", "Cardiología", "RM 25-48213"),
+    ("medico2", "Dr. Luis Salas", "Medicina general", "RM 25-51907"),
+    ("medico3", "Dr. Jaime Rojas", "Endocrinología", "RM 25-39642"),
+]
+
 
 def _hours(conn: sqlite3.Connection, pharmacy_id: int, plan) -> None:
     weekday, saturday, sunday = plan
@@ -144,19 +153,26 @@ def seed(conn: sqlite3.Connection, rng_seed: int = 7) -> None:
             "INSERT INTO profiles (user_id, name, relation, cedula) VALUES (?, 'Rosa Gómez', 'mamá', '20123456')", (uid,)
         ).lastrowid
 
+        doctors = {}
+        for username, name, specialty, license in DOCTORS:
+            doctors[username] = (staff.create_doctor(conn, username, name, specialty, DEMO_DOCTOR_PASSWORD, license),
+                                 name, specialty)
+
+        # Fórmulas ya emitidas por los médicos de ejemplo.
         today = now()
         rx = [
-            (me, 0, "Dra. Paredes", "Cardiología", 1, "1 tableta cada mañana", 2, 28),
-            (me, 1, "Dra. Paredes", "Cardiología", 1, "1 tableta en la noche", 10, 20),
-            (me, 2, "Dr. Salas", "Medicina general", 1, "1 cápsula en ayunas", 20, 9),
-            (mom, 3, "Dr. Rojas", "Endocrinología", 2, "1 tableta con desayuno y cena", 5, 25),
-            (mom, 4, "Dr. Rojas", "Endocrinología", 1, "1 tableta en ayunas", 15, 15),
-            (mom, 5, "Dra. Paredes", "Cardiología", 1, "1 tableta al día", 3, 27),
+            (me, 0, "medico1", 1, "1 tableta cada mañana", 2, 28),
+            (me, 1, "medico1", 1, "1 tableta en la noche", 10, 20),
+            (me, 2, "medico2", 1, "1 cápsula en ayunas", 20, 9),
+            (mom, 3, "medico3", 2, "1 tableta con desayuno y cena", 5, 25),
+            (mom, 4, "medico3", 1, "1 tableta en ayunas", 15, 15),
+            (mom, 5, "medico1", 1, "1 tableta al día", 3, 27),
         ]
-        for n, (profile, med_idx, doc, spec, qty, instr, ago, left) in enumerate(rx, start=1):
+        for n, (profile, med_idx, doc, qty, instr, ago, left) in enumerate(rx, start=1):
+            doctor_id, name, specialty = doctors[doc]
             conn.execute(
                 "INSERT INTO prescriptions (profile_id, medication_id, code, prescriber, specialty, quantity, "
-                "instructions, issued_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (profile, med_ids[med_idx], f"FM-{today.year}-{4800 + n:06d}", doc, spec, qty, instr,
-                 iso(today - timedelta(days=ago)), iso(today + timedelta(days=left))),
+                "instructions, issued_at, expires_at, doctor_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (profile, med_ids[med_idx], f"FM-{today.year}-{4800 + n:06d}", name, specialty, qty, instr,
+                 iso(today - timedelta(days=ago)), iso(today + timedelta(days=left)), doctor_id),
             )

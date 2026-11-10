@@ -34,6 +34,10 @@ def user(user_id: int) -> str:
     return f"user:{user_id}"
 
 
+def doctor(doctor_id: int) -> str:
+    return f"doctor:{doctor_id}"
+
+
 def emit(conn: sqlite3.Connection, channel: str, kind: str, ref_id: int | None = None) -> None:
     conn.execute(
         "INSERT INTO live_events (channel, kind, ref_id, created_at) VALUES (?, ?, ?, ?)",

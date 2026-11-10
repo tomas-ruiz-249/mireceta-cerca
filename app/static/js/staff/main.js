@@ -45,7 +45,7 @@ function login() {
       <div class="error" id="err" role="alert"></div>
       <button class="btn" type="submit">Ingresar</button>
     </form>
-    <p class="center small"><a href="/">¿Es paciente? Vaya a la app de pacientes</a></p>
+    <p class="center small"><a href="/">App de pacientes</a> · <a href="/medico">Personal médico</a></p>
   </div>`);
   $("#u", main).focus();
   $("#login", main).addEventListener("submit", async (e) => {

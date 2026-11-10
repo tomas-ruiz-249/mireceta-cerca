@@ -9,6 +9,7 @@ from .services import auth, staff
 
 SESSION_COOKIE = "mireceta_sesion"
 STAFF_COOKIE = "mireceta_personal"   # sesión del dispensador, independiente de la del paciente
+DOCTOR_COOKIE = "mireceta_medico"    # sesión del médico
 
 
 def current_user(
@@ -35,4 +36,14 @@ def current_staff(
     row = staff.for_token(conn, token)
     if not row:
         raise HTTPException(401, "Su turno terminó. Ingrese de nuevo")
+    return row
+
+
+def current_doctor(
+    conn: sqlite3.Connection = Depends(get_db),
+    token: str | None = Cookie(default=None, alias=DOCTOR_COOKIE),
+) -> sqlite3.Row:
+    row = staff.for_token(conn, token, kind="doctor")
+    if not row:
+        raise HTTPException(401, "Su sesión terminó. Ingrese de nuevo")
     return row

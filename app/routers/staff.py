@@ -16,7 +16,7 @@ from ..deps import STAFF_COOKIE, current_staff
 from ..schemas import (
     AdvanceIn, DeliverIn, PatientIn, RestockIn, StaffCancelIn, StaffLoginIn, StaffReservationIn, StockMoveIn,
 )
-from ..services import auth, live, reservations as svc, staff, stock
+from ..services import auth, live, prescriptions as rx_svc, reservations as svc, staff, stock
 from ..services.medications import to_dict as med_out
 
 router = APIRouter(prefix="/api/personal", tags=["dispensador"])
@@ -213,7 +213,8 @@ def _patient_out(conn: sqlite3.Connection, user: sqlite3.Row) -> dict:
         rxs = conn.execute(
             """SELECT p.*, m.name, m.strength, m.presentation, m.image FROM prescriptions p
                JOIN medications m ON m.id = p.medication_id
-               WHERE p.profile_id = ? AND p.dispensed_at IS NULL ORDER BY p.expires_at""",
+               WHERE p.profile_id = ? AND p.dispensed_at IS NULL AND p.cancelled_at IS NULL
+               ORDER BY p.expires_at""",
             (p["id"],),
         ).fetchall()
         out.append({
@@ -270,8 +271,8 @@ def reserve_for_patient(body: StaffReservationIn, s=Depends(current_staff), conn
                           (body.prescription_id, body.profile_id)).fetchone()
         if not rx or rx["medication_id"] != body.medication_id:
             raise HTTPException(400, "La fórmula no corresponde a este medicamento")
-        if rx["dispensed_at"] or parse(rx["expires_at"]) < now():
-            raise HTTPException(409, "Esta fórmula ya fue entregada o está vencida")
+        if problem := rx_svc.usable(rx):
+            raise HTTPException(409, problem)
     rid = _run(svc.create, conn, profile["user_id"], profile["id"], s["pharmacy_id"], body.medication_id,
                body.quantity, body.prescription_id, s)
     return _view(conn, s, rid)

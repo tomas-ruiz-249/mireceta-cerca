@@ -19,7 +19,10 @@ function activeReservation(r) {
 
 function prescriptionCard(rx, profile) {
   const usable = rx.state === "vigente";
-  return html`<article class="card" style="${usable ? "" : "opacity:.75"}">
+  // Recién emitida por el médico (últimas 24 horas): se marca para que se note.
+  const fresh = usable && rx.issued_at && Date.now() - new Date(rx.issued_at).getTime() < 86400000;
+  return html`<article class="card${fresh ? " highlight" : ""}" style="${usable ? "" : "opacity:.75"}">
+    ${fresh ? html`<p class="label">🆕 Fórmula nueva de su médico</p>` : ""}
     ${withPhoto(rx.medication, "md", html`<h2>${medName(rx.medication)}</h2>
       <p class="muted">${rx.medication.presentation}${rx.quantity > 1 ? ` · ${rx.quantity} cajas` : ""}</p>`)}
     ${rx.instructions ? html`<p><b>Cómo tomarlo:</b> ${rx.instructions}</p>` : ""}
@@ -30,7 +33,10 @@ function prescriptionCard(rx, profile) {
                Buscar dónde lo tienen</a>`
       : rx.state === "entregada"
         ? html`<p><b>✓ Ya fue entregada</b> el ${day(rx.dispensed_at)}.</p>`
-        : html`<p><b>Esta fórmula venció.</b> Pida una nueva a su médico.</p>`}
+        : rx.state === "anulada"
+          ? html`<p><b>Su médico anuló esta fórmula.</b>${rx.cancel_reason ? ` Motivo: ${rx.cancel_reason}.` : ""}
+              No la puede reservar; si tiene dudas, consulte a su médico.</p>`
+          : html`<p><b>Esta fórmula venció.</b> Pida una nueva a su médico.</p>`}
   </article>`;
 }
 
@@ -65,7 +71,7 @@ export default {
         <h2 id="rx-title">${whose}</h2>
         ${prescriptions.length
           ? prescriptions.map((rx) => prescriptionCard(rx, profile))
-          : empty("📋", "No hay fórmulas cargadas", "Cuando su EPS o su médico emita una fórmula, aparecerá aquí.")}
+          : empty("📋", "No hay fórmulas cargadas", "Cuando su médico le emita una fórmula, aparecerá aquí sola y le llegará un aviso.")}
       </section>
       <a class="btn secondary" href="#/buscar">🔍 Buscar otro medicamento</a>
       <a class="btn secondary" href="#/ayuda">❓ ¿Cómo funciona? Ayuda</a>`);

@@ -17,7 +17,7 @@ from datetime import timedelta
 
 from ..config import settings
 from ..db import iso, now, parse, transaction
-from . import live, medications, stock
+from . import live, medications, prescriptions, stock
 from .notify import notify
 
 STEPS = ["recibida", "en_preparacion", "lista", "retirada"]
@@ -63,6 +63,7 @@ def _event(conn: sqlite3.Connection, reservation_id: int, text: str, actor: str 
 def _broadcast(conn: sqlite3.Connection, r: sqlite3.Row, kind: str = "reservation") -> None:
     live.emit(conn, live.pharmacy(r["pharmacy_id"]), kind, r["id"])
     live.emit(conn, live.user(r["user_id"]), kind, r["id"])
+    prescriptions.broadcast_to_doctor(conn, r["prescription_id"])
 
 
 def _get(conn: sqlite3.Connection, reservation_id: int, pharmacy_id: int | None = None) -> sqlite3.Row:

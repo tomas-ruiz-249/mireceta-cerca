@@ -85,3 +85,21 @@ class StaffReservationIn(BaseModel):
     medication_id: int
     prescription_id: int | None = None
     quantity: int = Field(default=1, ge=1, le=10)
+
+
+# --- App del médico ---
+
+class PrescriptionItemIn(BaseModel):
+    medication_id: int
+    quantity: int = Field(default=1, ge=1, le=10)
+    instructions: str | None = Field(default=None, max_length=200)
+
+
+class PrescriptionIn(BaseModel):
+    profile_id: int
+    valid_days: int = Field(default=30, ge=1, le=180)
+    items: list[PrescriptionItemIn] = Field(min_length=1, max_length=8)
+
+
+class PrescriptionCancelIn(BaseModel):
+    reason: str = Field(min_length=1, max_length=200)

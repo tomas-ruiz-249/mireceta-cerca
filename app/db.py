@@ -42,6 +42,9 @@ MIGRATIONS = [
     ("reservation_events", "actor", "TEXT"),       # quién de la droguería hizo el cambio
     ("reservations", "created_by_staff", "INTEGER"),  # reserva hecha en el mostrador o por teléfono
     ("users", "activation_hash", "TEXT"),             # código para reclamar una cuenta abierta en la droguería
+    ("prescriptions", "doctor_id", "INTEGER REFERENCES doctors(id)"),  # médico que la emitió
+    ("prescriptions", "cancelled_at", "TEXT"),        # el médico la anuló
+    ("prescriptions", "cancel_reason", "TEXT"),
 ]
 
 # Funciones que se llaman justo después de cada COMMIT (las usa services/live.py

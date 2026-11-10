@@ -8,6 +8,8 @@ import { state } from "../state.js";
 const TOPICS = [
   ["¿Qué es MiReceta Cerca?",
     "Le dice qué droguería cercana tiene su medicamento, se lo aparta y le avisa cuando está listo para recogerlo. Así no hace viajes en vano."],
+  ["¿De dónde salen mis fórmulas?",
+    "Se las envía su médico desde el consultorio. Apenas la emite, le aparece en Mis fórmulas y le llega un aviso. Usted no tiene que escribir nada. Si quiere que le lleguen a la cuenta de un familiar, dígaselo al médico."],
   ["¿Cómo reservo?",
     "En Mis fórmulas toque Buscar dónde lo tienen. La primera droguería es la mejor opción: toque Reservar aquí y después Sí, reservar."],
   ["¿Cómo sé que está listo?",
@@ -17,11 +19,11 @@ const TOPICS = [
   ["¿Puede recogerlo otra persona?",
     "Sí. En su reserva toque Enviar por WhatsApp. La otra persona solo necesita mostrar el código."],
   ["Reservo para mi mamá o mi papá",
-    "En Mi cuenta agregue a su familiar. Después, en Mis fórmulas, elija para quién es."],
+    "En Mi cuenta agregue a su familiar con su número de cédula. Así, cuando el médico le formule, la fórmula le llega a usted. Después, en Mis fórmulas, elija para quién es."],
   ["No veo bien la letra",
     "En Mi cuenta, en Tamaño de la letra, elija Grande o Muy grande. En las pantallas importantes también puede tocar Escuchar en voz alta."],
   ["No tengo celular inteligente",
-    "Llame o vaya a su droguería y dé su número de cédula. El personal le hace la reserva y le anota un código para que usted, o un familiar, pueda usar la app después."],
+    "Pida al médico la fórmula impresa. Con ella, llame o vaya a su droguería y dé su número de cédula: allá ven su fórmula, le hacen la reserva y le anotan un código para que usted, o un familiar, pueda usar la app después."],
   ["Olvidé mi PIN",
     "Por ahora, pídale ayuda a la droguería o a un familiar que tenga su cuenta abierta: desde Mi cuenta se puede cambiar el PIN."],
 ];

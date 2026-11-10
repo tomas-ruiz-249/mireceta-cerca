@@ -1,5 +1,5 @@
-// Conexión en vivo con el servidor (Server-Sent Events). La usan las dos apps:
-// la del paciente y la del dispensador. El navegador reconecta solo si se cae.
+// Conexión en vivo con el servidor (Server-Sent Events). La usan las tres apps:
+// paciente, dispensador y médico. El navegador reconecta solo si se cae.
 //
 //   const off = connectLive("/api/notifications/stream", (kind, data) => ..., (online) => ...)
 
@@ -9,7 +9,7 @@ export function connectLive(url, onEvent, onStatus = () => {}) {
   let closed = false;
   let retryTimer = null;
 
-  const KINDS = ["reservation", "new_reservation", "arrived", "notification", "stock"];
+  const KINDS = ["reservation", "new_reservation", "arrived", "notification", "stock", "prescription"];
 
   function open() {
     es = new EventSource(url, { withCredentials: true });
